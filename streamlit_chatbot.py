@@ -300,7 +300,7 @@ class StreamlitSpaceMissionChatbot:
             eoPortal knowledge base using Retrieval-Augmented Generation (RAG). Before this, I was a Physics 
             undergraduate at the University of Cambridge.
                         
-            The assistant combines **LlamaIndex**, **ChromaDB**, and an OpenAI LLM to return grounded, 
+            The assistant combines **LlamaIndex**, **ChromaDB**, and an **OpenAI** LLM to return grounded, 
             citeable answers about orbits, payloads, buses, and mission patterns.
 
             **Why trust it?** I ran a full evaluation with **synthetically generated Q/As** (LLM-assisted)
@@ -319,7 +319,7 @@ class StreamlitSpaceMissionChatbot:
             if thesis_path.exists():
                 with open(thesis_path, "rb") as pdf:
                     st.download_button(
-                        label="📚 Download Full Thesis (PDF)",
+                        label="Download Full Thesis (PDF)",
                         data=pdf.read(),
                         file_name="Emil_Ares_Thesis_RAG.pdf",
                         mime="application/pdf",
@@ -339,7 +339,7 @@ class StreamlitSpaceMissionChatbot:
         """)
 
         # Inline citations to the IRP & figure doc
-        st.caption("See IRP for full methodology, parameter sweeps, and metrics tables. "
+        st.caption("See Thesis for full methodology, parameter sweeps, and metrics tables. "
                    "Correlation heatmap shown below.")
 
         st.markdown("---")
@@ -357,27 +357,22 @@ class StreamlitSpaceMissionChatbot:
         if heatmap_path:
             self._display_heatmap_image(
                 heatmap_path,
-                caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics."
+                caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics. ‘Recall@k’ & ‘Precision@k’ are deliberately omitted."
             )
         else:
             st.warning("Could not locate `Heatmap.png`. Place it in `assets/` directory.")
 
         # --- Explain the figure clearly to users (simple first, then technical) ---
         st.markdown("""
-        **Intuition:** when the search step finds the right passages, the final answer is better.  
-        The heatmap is mostly warm/positive between retrieval metrics (e.g., **MAP**, **MRR**) and
-        answer metrics (e.g., **F1**, **ROUGE-L**) — that's exactly what we want to see.
+        The heathmap provides compelling evidence for the core hypothesis of RAG systems. There is
+        a very strong positive correlation (0.96-0.97) between high-level retrieval metrics (MAP@k,
+        MRR) and the LLM-judged quality of the final answer (Relevancy, Correctness). This
+        empirically proves that a better retriever directly leads to a better final answer.
+                    
+        Interestingly, Faithfulness shows a much weaker correlation with retrieval metrics (0.22-0.41).
+        This implies that while excellent retrieval is a prerequisite for a correct answer, it does not,
+        by itself, guarantee that the LLM will use the provided context perfectly. This highlights the importance of both a high-quality retriever and a well-behaved generator model.
 
-        **What to look at:**
-        - **Retrieval ↔ Answer quality:** Strong positive correlations show that improving retrieval
-          (better ranking of relevant context) boosts final answer faithfulness and relevance.
-        - **Over-strict filters:** A too-high similarity threshold (e.g., 0.7) starves the LLM of context,
-          which drops both retrieval and generation scores.
-        - **RAGAS signals:** **R-Faith** (faithfulness) and **R-AnsRel** (answer relevance) move with
-          classical metrics, confirming that grounded, on-source responses track with good retrieval.
-
-        **Bottom line for users:** this assistant is tuned to return a small set of highly relevant
-        passages (k=5) with a moderate similarity threshold (0.1). That balance gave the best quality-per-second in testing.
         """)
 
         st.markdown("---")
@@ -387,14 +382,14 @@ class StreamlitSpaceMissionChatbot:
         ### Project & Stack
         - **Corpus:** ~1,000+ mission pages from ESA **eoPortal** (scraped with a robust, high-throughput pipeline).
         - **Indexing:** Markdown structuring, semantic embeddings, vector search in **ChromaDB**.
-        - **Orchestration:** **LlamaIndex** QueryEngine with source grouping & dedup.
-        - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis (F1 vs latency).
+        - **Orchestration:** **LlamaIndex** QueryEngine with source grouping.
+        - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis.
         """)
 
         st.markdown("---")
 
         # Small tagline to make your expertise explicit to visitors:
-        st.info("Built by Emil Ares — **RAG enthusiast**. Synthetic Q/A + **RAGAS** used to tune and validate this assistant.")
+        st.info("Built by Emil Ares (2025).")
     
     def render_sidebar(self):
         """Render the sidebar with settings and information"""
