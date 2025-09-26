@@ -594,7 +594,7 @@ class StreamlitSpaceMissionChatbot:
             self.render_sidebar()
             
             # Main content area
-            st.title("🚀 Space Mission Design Assistant")
+            st.title("🚀 Space Mission Design Assistant - by Emil Ares")
             st.markdown("Ask questions about historical space missions, orbits, payloads, and mission designs.")
             
             # Render chat interface
