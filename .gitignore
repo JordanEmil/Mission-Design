@@ -131,6 +131,9 @@ site/
 *.jpeg
 *_plots/
 
+# Exception for profile picture
+!profile_picture.jpg
+
 # Git LFS
 .gitattributes
 
