@@ -9,6 +9,7 @@ import sqlite_fix
 
 import os
 import json
+import base64
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List
@@ -263,6 +264,18 @@ class StreamlitSpaceMissionChatbot:
         if st.session_state.show_signup_modal:
             signup_dialog()
     
+    def _display_pdf_large(self, pdf_path, caption=""):
+        """Display a PDF file in the Streamlit app"""
+        try:
+            with open(pdf_path, "rb") as pdf_file:
+                base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
+                pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf">'
+                st.markdown(pdf_display, unsafe_allow_html=True)
+                if caption:
+                    st.caption(caption)
+        except Exception as e:
+            st.error(f"Could not display PDF: {e}")
+    
     def render_about_page(self):
         """Render the about page"""
         st.title("About the Space Mission Design Assistant")
@@ -283,35 +296,94 @@ class StreamlitSpaceMissionChatbot:
         
         with col2:
             st.markdown("""
-            ## Emil Ares
+## Emil Ares  
+        **Space Mission Design Assistant — RAG for Space Missions**
 
-            **Space Mission Design Enthusiast**
 
-            I created this Space Mission Design Assistant to help engineers and researchers
-            quickly access historical space mission data and learn from past mission designs.
-            
-            This tool uses advanced RAG (Retrieval-Augmented Generation) technology to provide 
-            accurate, contextual answers about satellite missions, orbits, payloads, and mission 
-            designs by searching through eoPortal, a comprehensive knowledge base of space missions.
-            
-            ### Contact
-            
-            **Email:** [eja65@cantab.ac.uk](mailto:eja65@cantab.ac.uk)
-            
-            **LinkedIn:** [Emil Ares](https://www.linkedin.com/in/emil-ares/)
-            
-            ---
-            
-            ### About the Project
-            
-            The Space Mission Design Assistant features:
-            - **Comprehensive Knowledge Base**: Data from 1000+ space missions
-            - **Advanced RAG Architecture**: Combines vector search with language models
-            - **Source Attribution**: All answers include references to source missions
-            - **Optimized Performance**: Fine-tuned retrieval parameters for best results
-            
-            Feel free to reach out if you have questions or suggestions!
-            """)
+        I built this assistant as part of my MSc Thesis at Cranfield University to let engineers query the
+        eoPortal knowledge base using Retrieval-Augmented Generation (RAG). Before this, I was a Physics undergraduate at the University of Cambridge.
+                        
+        The assistant combines **LlamaIndex**, **ChromaDB**, and an OpenAI LLM to return grounded, citeable answers about orbits, payloads, buses, and mission patterns.
+
+        **Why trust it?** I ran a full evaluation with **synthetically generated Q/As** (LLM-assisted)
+        and **RAGAS** metrics, plus classical IR metrics. The configuration you're using here is based
+        on that study's Pareto-optimal trade between answer quality and latency.
+        """)
+
+        # Credentials / contact
+        st.markdown("""
+        **Email:** [eja65@cantab.ac.uk](mailto:eja65@cantab.ac.uk)  
+        **LinkedIn:** [Emil Ares](https://www.linkedin.com/in/emil-ares/)
+        ---
+        """)
+
+        # --- Evaluation Summary (from IRP) ---
+        st.markdown("""
+        ### Evaluation Summary
+        - **Retriever quality:** Mean Average Precision **≈ 0.95**; high MRR — relevant passages usually rank at the top.  
+        - **Answer quality:** LLM-judged **F1 ≈ 0.75** on the synthetic benchmark; strong faithfulness per **RAGAS**.  
+        - **Latency:** Median end-to-end response **≈ 30.0 s** on the prototype.  
+        - **Selected runtime config:** `top_k=5`, `similarity_threshold=0.1`, `temperature=0.1`, `ResponseMode=COMPACT`.  
+        - **Key finding:** Retrieval quality and final answer quality are **strongly correlated**; tightening similarity too much (e.g. 0.5) hurts recall and overall answers.
+        """)
+
+        # Inline citations to the IRP & figure doc
+        st.caption("See IRP for full methodology, parameter sweeps, and metrics tables. "
+                   "Correlation heatmap shown below. "
+                   ":contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}")
+
+    st.markdown("---")
+
+    # --- Big correlation heatmap (bridging_9_correlation_heatmap.pdf) ---
+    # Resolve probable locations (assets or /mnt/data)
+    possible_paths = [
+        Path(__file__).parent / "assets" / "bridging_9_correlation_heatmap.pdf",
+        Path("assets/bridging_9_correlation_heatmap.pdf"),
+        Path("/mnt/data/bridging_9_correlation_heatmap.pdf"),
+        Path("bridging_9_correlation_heatmap.pdf"),
+    ]
+    heatmap_path = next((str(p) for p in possible_paths if p.exists()), None)
+
+    st.subheader("How the system's metrics relate (Correlation Heatmap)")
+    if heatmap_path:
+        self._display_pdf_large(
+            heatmap_path,
+            caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics."
+        )
+    else:
+        st.warning("Could not locate `bridging_9_correlation_heatmap.pdf`. Place it in `assets/` or `/mnt/data/`.")
+
+    # --- Explain the figure clearly to users (simple first, then technical) ---
+    st.markdown("""
+    **Intuition:** when the search step finds the right passages, the final answer is better.  
+    The heatmap is mostly warm/positive between retrieval metrics (e.g., **MAP**, **MRR**) and
+    answer metrics (e.g., **F1**, **ROUGE-L**) — that's exactly what we want to see.
+
+    **What to look at:**
+    - **Retrieval ↔ Answer quality:** Strong positive correlations show that improving retrieval
+      (better ranking of relevant context) boosts final answer faithfulness and relevance.
+    - **Over-strict filters:** A too-high similarity threshold (e.g., 0.7) starves the LLM of context,
+      which drops both retrieval and generation scores.
+    - **RAGAS signals:** **R-Faith** (faithfulness) and **R-AnsRel** (answer relevance) move with
+      classical metrics, confirming that grounded, on-source responses track with good retrieval.
+
+    **Bottom line for users:** this assistant is tuned to return a small set of highly relevant
+    passages (k=5) with a moderate similarity threshold (0.1). That balance gave the best quality-per-second in testing.
+    """)
+
+    st.markdown("---")
+
+    # --- Short "About the Project/Tech Stack" tails for completeness ---
+    st.markdown("""
+    ### Project & Stack
+    - **Corpus:** ~1,000+ mission pages from ESA **eoPortal** (scraped with a robust, high-throughput pipeline).
+    - **Indexing:** Markdown structuring, semantic embeddings, vector search in **ChromaDB**.
+    - **Orchestration:** **LlamaIndex** QueryEngine with source grouping & dedup.
+    - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis (F1 vs latency).
+    """)
+
+    # Small tagline to make your expertise explicit to visitors:
+    st.info("Built by Emil Ares — **RAG enthusiast**. Synthetic Q/A + **RAGAS** used to tune and validate this assistant.")
     
     def render_sidebar(self):
         """Render the sidebar with settings and information"""
