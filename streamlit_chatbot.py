@@ -49,7 +49,10 @@ class StreamlitSpaceMissionChatbot:
             st.session_state.query_engine = None
             st.session_state.authenticated = False
             st.session_state.current_user = None
-            st.session_state.show_login = True
+            st.session_state.show_login = False
+            st.session_state.show_login_modal = False
+            st.session_state.show_signup_modal = False
+            st.session_state.current_page = "chat"
     
     def _generate_session_id(self) -> str:
         """Generate a unique session ID"""
@@ -153,48 +156,91 @@ class StreamlitSpaceMissionChatbot:
                 'metadata': {'response_time': 0}
             }
     
-    def render_login_page(self):
-        """Render login/signup page"""
-        st.title("Space Mission Design Assistant - Authored by Emil Ares")
-        st.markdown("Welcome! Please login or create an account to begin.")
+    def render_header(self):
+        """Render header with navigation and auth buttons"""
+        col1, col2, col3 = st.columns([6, 1, 1])
         
-        tab1, tab2 = st.tabs(["Login", "Sign Up"])
+        with col1:
+            # Page navigation
+            cols = st.columns(3)
+            with cols[0]:
+                if st.button("Chat", use_container_width=True):
+                    st.session_state.current_page = "chat"
+                    st.rerun()
+            with cols[1]:
+                if st.button("About", use_container_width=True):
+                    st.session_state.current_page = "about"
+                    st.rerun()
         
-        with tab1:
+        with col2:
+            if st.session_state.current_user:
+                st.button(f"{st.session_state.current_user['username']}", disabled=True)
+            else:
+                if st.button("Login", use_container_width=True):
+                    st.session_state.show_login_modal = True
+                    st.rerun()
+        
+        with col3:
+            if st.session_state.current_user:
+                if st.button("Logout", use_container_width=True):
+                    st.session_state.authenticated = False
+                    st.session_state.current_user = None
+                    st.session_state.messages = []
+                    st.rerun()
+            else:
+                if st.button("Sign Up", use_container_width=True):
+                    st.session_state.show_signup_modal = True
+                    st.rerun()
+    
+    def render_login_modal(self):
+        """Render login modal dialog"""
+        @st.dialog("Login")
+        def login_dialog():
             with st.form("login_form"):
                 username = st.text_input("Username or Email")
                 password = st.text_input("Password", type="password")
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    login_button = st.form_submit_button("Login")
+                    login_button = st.form_submit_button("Login", use_container_width=True)
                 with col2:
-                    guest_button = st.form_submit_button("Continue as Guest")
+                    cancel_button = st.form_submit_button("Cancel", use_container_width=True)
                 
                 if login_button:
                     user = self.db_manager.authenticate_user(username, password)
                     if user:
                         st.session_state.current_user = user
                         st.session_state.authenticated = True
-                        st.session_state.show_login = False
+                        st.session_state.show_login_modal = False
                         st.success(f"Welcome back, {user['username']}!")
                         st.rerun()
                     else:
                         st.error("Invalid username or password")
                 
-                if guest_button:
-                    st.session_state.authenticated = True
-                    st.session_state.show_login = False
+                if cancel_button:
+                    st.session_state.show_login_modal = False
                     st.rerun()
         
-        with tab2:
+        if st.session_state.show_login_modal:
+            login_dialog()
+    
+    def render_signup_modal(self):
+        """Render signup modal dialog"""
+        @st.dialog("Sign Up")
+        def signup_dialog():
             with st.form("signup_form"):
                 new_username = st.text_input("Username")
                 new_email = st.text_input("Email")
                 new_password = st.text_input("Password", type="password")
                 confirm_password = st.text_input("Confirm Password", type="password")
+                col1, col2 = st.columns(2)
                 
-                if st.form_submit_button("Sign Up"):
+                with col1:
+                    signup_button = st.form_submit_button("Sign Up", use_container_width=True)
+                with col2:
+                    cancel_button = st.form_submit_button("Cancel", use_container_width=True)
+                
+                if signup_button:
                     if new_password != confirm_password:
                         st.error("Passwords do not match")
                     elif len(new_password) < 6:
@@ -204,11 +250,68 @@ class StreamlitSpaceMissionChatbot:
                         if user:
                             st.session_state.current_user = user
                             st.session_state.authenticated = True
-                            st.session_state.show_login = False
+                            st.session_state.show_signup_modal = False
                             st.success("Account created successfully!")
                             st.rerun()
                         else:
                             st.error("Username or email already exists")
+                
+                if cancel_button:
+                    st.session_state.show_signup_modal = False
+                    st.rerun()
+        
+        if st.session_state.show_signup_modal:
+            signup_dialog()
+    
+    def render_about_page(self):
+        """Render the about page"""
+        st.title("About the Space Mission Design Assistant")
+        
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            # Profile picture placeholder
+            profile_path = Path(__file__).parent / "profile_picture.jpg"
+            if profile_path.exists():
+                st.image(str(profile_path), width=200)
+            else:
+                # Try current directory as fallback
+                if os.path.exists("profile_picture.jpg"):
+                    st.image("profile_picture.jpg", width=200)
+                else:
+                    st.info("Add profile_picture.jpg to the project directory")
+        
+        with col2:
+            st.markdown("""
+            ## Emil Ares
+
+            **Space Mission Design Enthusiast**
+
+            I created this Space Mission Design Assistant to help engineers and researchers
+            quickly access historical space mission data and learn from past mission designs.
+            
+            This tool uses advanced RAG (Retrieval-Augmented Generation) technology to provide 
+            accurate, contextual answers about satellite missions, orbits, payloads, and mission 
+            designs by searching through eoPortal, a comprehensive knowledge base of space missions.
+            
+            ### Contact
+            
+            **Email:** [eja65@cantab.ac.uk](mailto:eja65@cantab.ac.uk)
+            
+            **LinkedIn:** [Emil Ares](https://www.linkedin.com/in/emil-ares/)
+            
+            ---
+            
+            ### About the Project
+            
+            The Space Mission Design Assistant features:
+            - **Comprehensive Knowledge Base**: Data from 1000+ space missions
+            - **Advanced RAG Architecture**: Combines vector search with language models
+            - **Source Attribution**: All answers include references to source missions
+            - **Optimized Performance**: Fine-tuned retrieval parameters for best results
+            
+            Feel free to reach out if you have questions or suggestions!
+            """)
     
     def render_sidebar(self):
         """Render the sidebar with settings and information"""
@@ -242,12 +345,19 @@ class StreamlitSpaceMissionChatbot:
                 st.session_state.query_count = 0
                 st.rerun()
             
-            if st.button("Logout"):
-                st.session_state.authenticated = False
-                st.session_state.current_user = None
-                st.session_state.show_login = True
-                st.session_state.messages = []
-                st.rerun()
+            if st.session_state.current_user:
+                if st.button("View History"):
+                    history = self.db_manager.get_user_chat_history(
+                        st.session_state.current_user['id'], 
+                        limit=50
+                    )
+                    if history:
+                        st.subheader("Recent Queries")
+                        for msg in history[:10]:
+                            if msg['message_type'] == 'user':
+                                st.text(f"Q: {msg['message'][:50]}...")
+                    else:
+                        st.info("No history yet")
             
             # Examples
             st.subheader("Example Questions")
@@ -345,7 +455,7 @@ class StreamlitSpaceMissionChatbot:
     def run(self):
         """Run the Streamlit application"""
         st.set_page_config(
-            page_title="Space Mission Chatbot - Authored by Emil Ares",
+            page_title="Space Mission Design Assistant",
             page_icon="🚀",
             layout="wide"
         )
@@ -358,21 +468,20 @@ class StreamlitSpaceMissionChatbot:
             margin-bottom: 1rem;
             border-radius: 0.5rem;
         }
+        div[data-testid="stHorizontalBlock"] > div:first-child {
+            flex-grow: 0;
+        }
         </style>
         """, unsafe_allow_html=True)
         
-        # Check if login page should be shown
-        if st.session_state.show_login:
-            self.render_login_page()
-            return
-        
-        # Initialize query engine after authentication
-        if not st.session_state.initialized and st.session_state.authenticated:
+        # Initialize query engine if not already done
+        if not st.session_state.initialized:
             try:
                 # Get API key from secrets
                 api_key = st.secrets.get("OPENAI_API_KEY")
                 if not api_key:
                     st.error("OpenAI API key not found in Streamlit secrets!")
+                    st.info("Please add OPENAI_API_KEY to your Streamlit secrets.")
                     st.stop()
                 
                 # Set the API key in environment
@@ -387,21 +496,31 @@ class StreamlitSpaceMissionChatbot:
                         llm_model="o3"
                     )
                     st.session_state.initialized = True
-                    st.success("Successfully initialized!")
-                    st.rerun()
+                    st.session_state.authenticated = True  # Allow immediate access
             except Exception as e:
                 st.error(f"Error initializing query engine: {e}")
                 st.stop()
         
-        # Render sidebar
-        self.render_sidebar()
+        # Render header with navigation
+        self.render_header()
         
-        # Main content area
-        st.title("Space Mission Design Assistant - Authored by Emil Ares")
-        st.markdown("Ask questions about historical space missions, orbits, payloads, and mission designs.")
+        # Render modals if needed
+        self.render_login_modal()
+        self.render_signup_modal()
         
-        # Render chat interface
-        self.render_chat_interface()
+        # Render content based on current page
+        if st.session_state.current_page == "about":
+            self.render_about_page()
+        else:
+            # Render sidebar
+            self.render_sidebar()
+            
+            # Main content area
+            st.title("🚀 Space Mission Design Assistant")
+            st.markdown("Ask questions about historical space missions, orbits, payloads, and mission designs.")
+            
+            # Render chat interface
+            self.render_chat_interface()
 
 
 def main():
