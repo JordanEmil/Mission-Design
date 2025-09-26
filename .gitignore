@@ -138,6 +138,9 @@ site/
 !assets/bridging_9_correlation_heatmap.pdf
 !assets/Heatmap.png
 
+# Exception for thesis PDF
+!assets/Emil_Ares_Thesis_RAG.pdf
+
 # Git LFS
 .gitattributes
 

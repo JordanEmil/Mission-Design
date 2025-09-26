@@ -378,6 +378,20 @@ class StreamlitSpaceMissionChatbot:
         - **Orchestration:** **LlamaIndex** QueryEngine with source grouping & dedup.
         - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis (F1 vs latency).
         """)
+        
+        # Download thesis button
+        thesis_path = Path(__file__).parent / "assets" / "Emil_Ares_Thesis_RAG.pdf"
+        if thesis_path.exists():
+            with open(thesis_path, "rb") as pdf:
+                st.download_button(
+                    label="📚 Download Full Thesis (PDF)",
+                    data=pdf.read(),
+                    file_name="Emil_Ares_Thesis_RAG.pdf",
+                    mime="application/pdf",
+                    help="Download the complete MSc thesis detailing the RAG implementation and evaluation"
+                )
+        
+        st.markdown("---")
 
         # Small tagline to make your expertise explicit to visitors:
         st.info("Built by Emil Ares — **RAG enthusiast**. Synthetic Q/A + **RAGAS** used to tune and validate this assistant.")
