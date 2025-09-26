@@ -134,6 +134,9 @@ site/
 # Exception for profile picture
 !profile_picture.jpg
 
+# Exception for correlation heatmap
+!assets/bridging_9_correlation_heatmap.pdf
+
 # Git LFS
 .gitattributes
 
