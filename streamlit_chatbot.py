@@ -9,7 +9,6 @@ import sqlite_fix
 
 import os
 import json
-import base64
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List
@@ -267,14 +266,35 @@ class StreamlitSpaceMissionChatbot:
     def _display_pdf_large(self, pdf_path, caption=""):
         """Display a PDF file in the Streamlit app"""
         try:
+            # Read the PDF file
             with open(pdf_path, "rb") as pdf_file:
-                base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
-                pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf">'
-                st.markdown(pdf_display, unsafe_allow_html=True)
-                if caption:
-                    st.caption(caption)
+                pdf_data = pdf_file.read()
+            
+            # Create a nice display with download button
+            st.info("📊 **Correlation Heatmap**")
+            
+            # Provide download button
+            st.download_button(
+                label="📥 Download Correlation Heatmap (PDF)",
+                data=pdf_data,
+                file_name="correlation_heatmap.pdf",
+                mime="application/pdf",
+                help="Click to download the correlation heatmap showing relationships between retrieval and generation metrics"
+            )
+            
+            if caption:
+                st.caption(caption)
+                
+            # Add note about the heatmap
+            st.markdown("""
+            <div style="background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-top: 10px;">
+            <small><b>Note:</b> The heatmap shows strong positive correlations between retrieval metrics (MAP, MRR) 
+            and answer quality metrics (F1, ROUGE-L), validating our system design.</small>
+            </div>
+            """, unsafe_allow_html=True)
+                    
         except Exception as e:
-            st.error(f"Could not display PDF: {e}")
+            st.error(f"Could not load correlation heatmap: {e}")
     
     def render_about_page(self):
         """Render the about page"""
