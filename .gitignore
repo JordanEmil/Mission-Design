@@ -136,6 +136,7 @@ site/
 
 # Exception for correlation heatmap
 !assets/bridging_9_correlation_heatmap.pdf
+!assets/Heatmap.png
 
 # Git LFS
 .gitattributes

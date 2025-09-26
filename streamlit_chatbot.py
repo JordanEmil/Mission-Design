@@ -263,36 +263,10 @@ class StreamlitSpaceMissionChatbot:
         if st.session_state.show_signup_modal:
             signup_dialog()
     
-    def _display_pdf_large(self, pdf_path, caption=""):
-        """Display a PDF file in the Streamlit app"""
+    def _display_heatmap_image(self, image_path, caption=""):
+        """Display the correlation heatmap image"""
         try:
-            # Read the PDF file
-            with open(pdf_path, "rb") as pdf_file:
-                pdf_data = pdf_file.read()
-            
-            # Create a nice display with download button
-            st.info("📊 **Correlation Heatmap**")
-            
-            # Provide download button
-            st.download_button(
-                label="📥 Download Correlation Heatmap (PDF)",
-                data=pdf_data,
-                file_name="correlation_heatmap.pdf",
-                mime="application/pdf",
-                help="Click to download the correlation heatmap showing relationships between retrieval and generation metrics"
-            )
-            
-            if caption:
-                st.caption(caption)
-                
-            # Add note about the heatmap
-            st.markdown("""
-            <div style="background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-top: 10px;">
-            <small><b>Note:</b> The heatmap shows strong positive correlations between retrieval metrics (MAP, MRR) 
-            and answer quality metrics (F1, ROUGE-L), validating our system design.</small>
-            </div>
-            """, unsafe_allow_html=True)
-                    
+            st.image(image_path, caption=caption, use_column_width=True)
         except Exception as e:
             st.error(f"Could not load correlation heatmap: {e}")
     
@@ -355,24 +329,23 @@ class StreamlitSpaceMissionChatbot:
 
         st.markdown("---")
 
-        # --- Big correlation heatmap (bridging_9_correlation_heatmap.pdf) ---
-        # Resolve probable locations (assets or /mnt/data)
+        # --- Big correlation heatmap image ---
+        # Resolve probable locations for the PNG image
         possible_paths = [
-            Path(__file__).parent / "assets" / "bridging_9_correlation_heatmap.pdf",
-            Path("assets/bridging_9_correlation_heatmap.pdf"),
-            Path("/mnt/data/bridging_9_correlation_heatmap.pdf"),
-            Path("bridging_9_correlation_heatmap.pdf"),
+            Path(__file__).parent / "assets" / "Heatmap.png",
+            Path("assets/Heatmap.png"),
+            Path("Heatmap.png"),
         ]
         heatmap_path = next((str(p) for p in possible_paths if p.exists()), None)
 
         st.subheader("How the system's metrics relate (Correlation Heatmap)")
         if heatmap_path:
-            self._display_pdf_large(
+            self._display_heatmap_image(
                 heatmap_path,
                 caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics."
             )
         else:
-            st.warning("Could not locate `bridging_9_correlation_heatmap.pdf`. Place it in `assets/` or `/mnt/data/`.")
+            st.warning("Could not locate `Heatmap.png`. Place it in `assets/` directory.")
 
         # --- Explain the figure clearly to users (simple first, then technical) ---
         st.markdown("""
