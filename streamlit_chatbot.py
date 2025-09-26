@@ -296,26 +296,28 @@ class StreamlitSpaceMissionChatbot:
         
         with col2:
             st.markdown("""
-## Emil Ares  
-        **Space Mission Design Assistant — RAG for Space Missions**
+            ## Emil Ares  
+            **Space Mission Design Assistant — RAG for Space Missions**
 
-
-        I built this assistant as part of my MSc Thesis at Cranfield University to let engineers query the
-        eoPortal knowledge base using Retrieval-Augmented Generation (RAG). Before this, I was a Physics undergraduate at the University of Cambridge.
+            I built this assistant as part of my MSc Thesis at Cranfield University to let engineers query the
+            eoPortal knowledge base using Retrieval-Augmented Generation (RAG). Before this, I was a Physics 
+            undergraduate at the University of Cambridge.
                         
-        The assistant combines **LlamaIndex**, **ChromaDB**, and an OpenAI LLM to return grounded, citeable answers about orbits, payloads, buses, and mission patterns.
+            The assistant combines **LlamaIndex**, **ChromaDB**, and an OpenAI LLM to return grounded, 
+            citeable answers about orbits, payloads, buses, and mission patterns.
 
-        **Why trust it?** I ran a full evaluation with **synthetically generated Q/As** (LLM-assisted)
-        and **RAGAS** metrics, plus classical IR metrics. The configuration you're using here is based
-        on that study's Pareto-optimal trade between answer quality and latency.
-        """)
+            **Why trust it?** I ran a full evaluation with **synthetically generated Q/As** (LLM-assisted)
+            and **RAGAS** metrics, plus classical IR metrics. The configuration you're using here is based
+            on that study's Pareto-optimal trade between answer quality and latency.
+            """)
 
-        # Credentials / contact
-        st.markdown("""
-        **Email:** [eja65@cantab.ac.uk](mailto:eja65@cantab.ac.uk)  
-        **LinkedIn:** [Emil Ares](https://www.linkedin.com/in/emil-ares/)
-        ---
-        """)
+            # Credentials / contact
+            st.markdown("""
+            **Email:** [eja65@cantab.ac.uk](mailto:eja65@cantab.ac.uk)  
+            **LinkedIn:** [Emil Ares](https://www.linkedin.com/in/emil-ares/)
+            
+            ---
+            """)
 
         # --- Evaluation Summary (from IRP) ---
         st.markdown("""
@@ -329,61 +331,60 @@ class StreamlitSpaceMissionChatbot:
 
         # Inline citations to the IRP & figure doc
         st.caption("See IRP for full methodology, parameter sweeps, and metrics tables. "
-                   "Correlation heatmap shown below. "
-                   ":contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}")
+                   "Correlation heatmap shown below.")
 
-    st.markdown("---")
+        st.markdown("---")
 
-    # --- Big correlation heatmap (bridging_9_correlation_heatmap.pdf) ---
-    # Resolve probable locations (assets or /mnt/data)
-    possible_paths = [
-        Path(__file__).parent / "assets" / "bridging_9_correlation_heatmap.pdf",
-        Path("assets/bridging_9_correlation_heatmap.pdf"),
-        Path("/mnt/data/bridging_9_correlation_heatmap.pdf"),
-        Path("bridging_9_correlation_heatmap.pdf"),
-    ]
-    heatmap_path = next((str(p) for p in possible_paths if p.exists()), None)
+        # --- Big correlation heatmap (bridging_9_correlation_heatmap.pdf) ---
+        # Resolve probable locations (assets or /mnt/data)
+        possible_paths = [
+            Path(__file__).parent / "assets" / "bridging_9_correlation_heatmap.pdf",
+            Path("assets/bridging_9_correlation_heatmap.pdf"),
+            Path("/mnt/data/bridging_9_correlation_heatmap.pdf"),
+            Path("bridging_9_correlation_heatmap.pdf"),
+        ]
+        heatmap_path = next((str(p) for p in possible_paths if p.exists()), None)
 
-    st.subheader("How the system's metrics relate (Correlation Heatmap)")
-    if heatmap_path:
-        self._display_pdf_large(
-            heatmap_path,
-            caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics."
-        )
-    else:
-        st.warning("Could not locate `bridging_9_correlation_heatmap.pdf`. Place it in `assets/` or `/mnt/data/`.")
+        st.subheader("How the system's metrics relate (Correlation Heatmap)")
+        if heatmap_path:
+            self._display_pdf_large(
+                heatmap_path,
+                caption="Correlation heatmap across retrieval (Recall@k, MAP, MRR), generation (EM, F1, ROUGE-L, BLEU), and RAGAS metrics."
+            )
+        else:
+            st.warning("Could not locate `bridging_9_correlation_heatmap.pdf`. Place it in `assets/` or `/mnt/data/`.")
 
-    # --- Explain the figure clearly to users (simple first, then technical) ---
-    st.markdown("""
-    **Intuition:** when the search step finds the right passages, the final answer is better.  
-    The heatmap is mostly warm/positive between retrieval metrics (e.g., **MAP**, **MRR**) and
-    answer metrics (e.g., **F1**, **ROUGE-L**) — that's exactly what we want to see.
+        # --- Explain the figure clearly to users (simple first, then technical) ---
+        st.markdown("""
+        **Intuition:** when the search step finds the right passages, the final answer is better.  
+        The heatmap is mostly warm/positive between retrieval metrics (e.g., **MAP**, **MRR**) and
+        answer metrics (e.g., **F1**, **ROUGE-L**) — that's exactly what we want to see.
 
-    **What to look at:**
-    - **Retrieval ↔ Answer quality:** Strong positive correlations show that improving retrieval
-      (better ranking of relevant context) boosts final answer faithfulness and relevance.
-    - **Over-strict filters:** A too-high similarity threshold (e.g., 0.7) starves the LLM of context,
-      which drops both retrieval and generation scores.
-    - **RAGAS signals:** **R-Faith** (faithfulness) and **R-AnsRel** (answer relevance) move with
-      classical metrics, confirming that grounded, on-source responses track with good retrieval.
+        **What to look at:**
+        - **Retrieval ↔ Answer quality:** Strong positive correlations show that improving retrieval
+          (better ranking of relevant context) boosts final answer faithfulness and relevance.
+        - **Over-strict filters:** A too-high similarity threshold (e.g., 0.7) starves the LLM of context,
+          which drops both retrieval and generation scores.
+        - **RAGAS signals:** **R-Faith** (faithfulness) and **R-AnsRel** (answer relevance) move with
+          classical metrics, confirming that grounded, on-source responses track with good retrieval.
 
-    **Bottom line for users:** this assistant is tuned to return a small set of highly relevant
-    passages (k=5) with a moderate similarity threshold (0.1). That balance gave the best quality-per-second in testing.
-    """)
+        **Bottom line for users:** this assistant is tuned to return a small set of highly relevant
+        passages (k=5) with a moderate similarity threshold (0.1). That balance gave the best quality-per-second in testing.
+        """)
 
-    st.markdown("---")
+        st.markdown("---")
 
-    # --- Short "About the Project/Tech Stack" tails for completeness ---
-    st.markdown("""
-    ### Project & Stack
-    - **Corpus:** ~1,000+ mission pages from ESA **eoPortal** (scraped with a robust, high-throughput pipeline).
-    - **Indexing:** Markdown structuring, semantic embeddings, vector search in **ChromaDB**.
-    - **Orchestration:** **LlamaIndex** QueryEngine with source grouping & dedup.
-    - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis (F1 vs latency).
-    """)
+        # --- Short "About the Project/Tech Stack" tails for completeness ---
+        st.markdown("""
+        ### Project & Stack
+        - **Corpus:** ~1,000+ mission pages from ESA **eoPortal** (scraped with a robust, high-throughput pipeline).
+        - **Indexing:** Markdown structuring, semantic embeddings, vector search in **ChromaDB**.
+        - **Orchestration:** **LlamaIndex** QueryEngine with source grouping & dedup.
+        - **Evaluation:** synthetic Q/A generation, RAGAS, classical IR metrics, Pareto analysis (F1 vs latency).
+        """)
 
-    # Small tagline to make your expertise explicit to visitors:
-    st.info("Built by Emil Ares — **RAG enthusiast**. Synthetic Q/A + **RAGAS** used to tune and validate this assistant.")
+        # Small tagline to make your expertise explicit to visitors:
+        st.info("Built by Emil Ares — **RAG enthusiast**. Synthetic Q/A + **RAGAS** used to tune and validate this assistant.")
     
     def render_sidebar(self):
         """Render the sidebar with settings and information"""
