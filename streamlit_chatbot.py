@@ -266,7 +266,10 @@ class StreamlitSpaceMissionChatbot:
     def _display_heatmap_image(self, image_path, caption=""):
         """Display the correlation heatmap image"""
         try:
-            st.image(image_path, caption=caption, use_column_width=True)
+            # Create columns to center and size the image appropriately
+            col1, col2, col3 = st.columns([1, 3, 1])
+            with col2:
+                st.image(image_path, caption=caption, use_container_width=True)
         except Exception as e:
             st.error(f"Could not load correlation heatmap: {e}")
     
